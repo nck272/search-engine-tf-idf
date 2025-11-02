@@ -28,19 +28,6 @@ func GetPokedex() []pokemon {
 	return pokemons
 }
 
-func GetDocTokens(pokemons []pokemon) *doc_tokens {
-	doc_tokens := doc_tokens{}
-	for _, pokemon := range pokemons {
-		name := pokemon.Name["english"]
-		tokens := Tokenize(pokemon.Description)
-		for _, t := range pokemon.Types {
-			tokens = append(tokens, t)
-		}
-		doc_tokens[name] = tokens
-	}
-	return &doc_tokens
-}
-
 func main() {
 	if len(os.Args) <= 1 {
 		log.Fatalf("ERROR: missing arguements, please input the text you want to search!")
@@ -49,11 +36,20 @@ func main() {
 
 	// Get pokemon descriptios
 	pokemons := GetPokedex()
-	doc_tokens := GetDocTokens(pokemons)
-
-	// Search and Sort the result descending by cosine_similarity
-	search_service := GetSearchService(*doc_tokens)
-	search_results := search_service.Search(input_str, true)
+	search_results := []string{}
+	input_tokens := Tokenize(input_str)
+	if len(input_tokens) == 1 {
+		for _, pokemon := range pokemons {
+			if strings.Contains(Standardlize(pokemon.Description), Standardlize(input_str)) {
+				search_results = append(search_results, pokemon.Name["english"])
+			}
+		}
+	} else {
+		// Search and Sort the result descending by cosine_similarity
+		doc_tokens := GetDocTokens(pokemons)
+		search_service := GetSearchService(doc_tokens)
+		search_results = search_service.Search(input_tokens, true)
+	}
 
 	// Return result which is a list of description that match with input text
 	if len(search_results) > 0 {

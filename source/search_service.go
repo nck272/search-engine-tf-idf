@@ -29,8 +29,7 @@ func GetSearchService(_doc_tokens doc_tokens) *search_service {
 	return &service
 }
 
-func (sv search_service) Search(input_str string, is_asc bool) []string {
-	input_tokens := Tokenize(input_str)
+func (sv search_service) Search(input_tokens []string, is_asc bool) []string {
 	input_tfidf := CalcTF_IDF(input_tokens, sv.InverseDocFreq)
 	matches := sv.FindMatches(input_tfidf)
 	sorted_matches := SortMatches(matches, is_asc)
@@ -141,4 +140,17 @@ func CalcCosineSimilarity(vec1, vec2 map[string]float64) float64 {
 		return 0.0
 	}
 	return dot_product / (math.Sqrt(norm1) * math.Sqrt(norm2))
+}
+
+func GetDocTokens(pokemons []pokemon) doc_tokens {
+	doc_tokens := doc_tokens{}
+	for _, pokemon := range pokemons {
+		name := pokemon.Name["english"]
+		tokens := Tokenize(pokemon.Description)
+		for _, t := range pokemon.Types {
+			tokens = append(tokens, t)
+		}
+		doc_tokens[name] = tokens
+	}
+	return doc_tokens
 }
