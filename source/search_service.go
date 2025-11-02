@@ -116,9 +116,9 @@ func Standardlize(s string) string {
 }
 
 func Tokenize(s string) []string {
-	excludes := []string{",", "."}
-	for _, c := range excludes {
-		s = strings.ReplaceAll(s, c, "")
+	delimiters := []string{",", ".", "|"}
+	for _, delimiter := range delimiters {
+		s = strings.ReplaceAll(s, delimiter, "")
 	}
 	tokens := strings.Split(s, " ")
 	for key := range tokens {

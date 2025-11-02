@@ -12,11 +12,11 @@ const PATH_POKEDEX string = "../data/pokemon.json"
 type pokemon struct {
 	Id          int               `json: "id"`
 	Name        map[string]string `json:"name"`
-	Type        []string          `json:"type"`
+	Types       []string          `json:"type"`
 	Description string            `json:"description"`
 }
 
-func GetPokedex() *[]pokemon {
+func GetPokedex() []pokemon {
 	f, err := os.ReadFile(PATH_POKEDEX)
 	if err != nil {
 		log.Fatalf("ERROR: Could not read data from %v: %v", PATH_POKEDEX, err)
@@ -25,7 +25,7 @@ func GetPokedex() *[]pokemon {
 	var pokemons []pokemon
 	json.Unmarshal(f, &pokemons)
 
-	return &pokemons
+	return pokemons
 }
 
 func GetDocTokens(pokemons []pokemon) *doc_tokens {
@@ -33,6 +33,9 @@ func GetDocTokens(pokemons []pokemon) *doc_tokens {
 	for _, pokemon := range pokemons {
 		name := pokemon.Name["english"]
 		tokens := Tokenize(pokemon.Description)
+		for _, t := range pokemon.Types {
+			tokens = append(tokens, t)
+		}
 		doc_tokens[name] = tokens
 	}
 	return &doc_tokens
@@ -44,9 +47,9 @@ func main() {
 	}
 	input_str := strings.Join(os.Args[1:], " ")
 
-	// Get tf-idf of pokemon descriptions
+	// Get pokemon descriptios
 	pokemons := GetPokedex()
-	doc_tokens := GetDocTokens(*pokemons)
+	doc_tokens := GetDocTokens(pokemons)
 
 	// Search and Sort the result descending by cosine_similarity
 	search_service := GetSearchService(*doc_tokens)
