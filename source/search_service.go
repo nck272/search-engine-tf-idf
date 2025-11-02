@@ -143,7 +143,7 @@ func CalcCosineSimilarity(vec1, vec2 map[string]float64) float64 {
 }
 
 func GetDocTokens(pokemons []pokemon) doc_tokens {
-	doc_tokens := doc_tokens{}
+	doc_tokens := make(doc_tokens)
 	for _, pokemon := range pokemons {
 		name := pokemon.Name["english"]
 		tokens := Tokenize(pokemon.Description)

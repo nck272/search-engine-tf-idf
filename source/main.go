@@ -37,6 +37,7 @@ func main() {
 	// Get pokemon descriptios
 	pokemons := GetPokedex()
 	search_results := []string{}
+
 	input_tokens := Tokenize(input_str)
 	if len(input_tokens) == 1 {
 		for _, pokemon := range pokemons {
