@@ -74,12 +74,12 @@ func GetTermFreqIDF(_doc_tokens doc_tokens, idf metric) map[string]metric {
 }
 
 func CalcTF_IDF(tokens []string, idf metric) metric {
-	tf := make(metric)
+	tf := metric{}
 	for _, token := range tokens {
 		tf[token] = tf[token] + 1
 	}
 
-	tf_idf := make(metric)
+	tf_idf := metric{}
 	for key := range tf {
 		tf[key] = tf[key] / float64(len(tokens))
 		tf_idf[key] = tf[key] * idf[key]
@@ -95,14 +95,14 @@ func CalcIDF(_docs_tokens doc_tokens) metric {
 		}
 	}
 
-	df := make(metric)
+	df := metric{}
 	for _, token := range tokens {
 		if df[token] == 0 {
 			df[token] = 1
 		}
 	}
 
-	idf := make(metric)
+	idf := metric{}
 	for term, count := range df {
 		idf[term] = math.Log(float64(len(_docs_tokens)) / float64(count+1))
 	}
@@ -143,7 +143,7 @@ func CalcCosineSimilarity(vec1, vec2 map[string]float64) float64 {
 }
 
 func GetDocTokens(pokemons []pokemon) doc_tokens {
-	doc_tokens := make(doc_tokens)
+	doc_tokens := doc_tokens{}
 	for _, pokemon := range pokemons {
 		name := pokemon.Name["english"]
 		tokens := Tokenize(pokemon.Description)
