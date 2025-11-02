@@ -24,15 +24,15 @@ type metric map[string]float64
 
 func GetSearchService(_doc_tokens doc_tokens) *search_service {
 	service := search_service{}
-	service.InverseDocFreq = *CalcIDF(_doc_tokens)
-	service.TermIDF = *GetTermFreqIDF(_doc_tokens, service.InverseDocFreq)
+	service.InverseDocFreq = CalcIDF(_doc_tokens)
+	service.TermIDF = GetTermFreqIDF(_doc_tokens, service.InverseDocFreq)
 	return &service
 }
 
 func (sv search_service) Search(input_str string, is_asc bool) []string {
 	input_tokens := Tokenize(input_str)
 	input_tfidf := CalcTF_IDF(input_tokens, sv.InverseDocFreq)
-	matches := sv.FindMatches(*input_tfidf)
+	matches := sv.FindMatches(input_tfidf)
 	sorted_matches := SortMatches(matches, is_asc)
 	return sorted_matches
 }
@@ -56,7 +56,7 @@ func SortMatches(matches []match, is_asc bool) []string {
 	for i := range matches {
 		results = append(results, matches[i].Result)
 	}
-	sort.SliceStable(results, func(i, j int) bool {
+	sort.Slice(results, func(i, j int) bool {
 		if is_asc {
 			return matches[i].Score > matches[j].Score
 		} else {
@@ -66,29 +66,29 @@ func SortMatches(matches []match, is_asc bool) []string {
 	return results
 }
 
-func GetTermFreqIDF(_doc_tokens doc_tokens, idf metric) *map[string]metric {
+func GetTermFreqIDF(_doc_tokens doc_tokens, idf metric) map[string]metric {
 	tf_idf := map[string]metric{}
 	for doc, tokens := range _doc_tokens {
-		tf_idf[doc] = *CalcTF_IDF(tokens, idf)
+		tf_idf[doc] = CalcTF_IDF(tokens, idf)
 	}
-	return &tf_idf
+	return tf_idf
 }
 
-func CalcTF_IDF(tokens []string, idf metric) *metric {
-	tf := metric{}
+func CalcTF_IDF(tokens []string, idf metric) metric {
+	tf := make(metric)
 	for _, token := range tokens {
 		tf[token] = tf[token] + 1
 	}
 
-	tf_idf := metric{}
+	tf_idf := make(metric)
 	for key := range tf {
 		tf[key] = tf[key] / float64(len(tokens))
 		tf_idf[key] = tf[key] * idf[key]
 	}
-	return &tf_idf
+	return tf_idf
 }
 
-func CalcIDF(_docs_tokens doc_tokens) *metric {
+func CalcIDF(_docs_tokens doc_tokens) metric {
 	tokens := []string{}
 	for _, _tokens := range _docs_tokens {
 		for _, token := range _tokens {
@@ -96,17 +96,18 @@ func CalcIDF(_docs_tokens doc_tokens) *metric {
 		}
 	}
 
-	df := metric{}
+	df := make(metric)
 	for _, token := range tokens {
-		df[token] = df[token] + 1
+		if df[token] == 0 {
+			df[token] = 1
+		}
 	}
 
-	idf := metric{}
-	for _, token := range tokens {
-		val := float64(len(_docs_tokens)) / float64(df[token]+1)
-		idf[token] = math.Log(val)
+	idf := make(metric)
+	for term, count := range df {
+		idf[term] = math.Log(float64(len(_docs_tokens)) / float64(count+1))
 	}
-	return &idf
+	return idf
 }
 
 func Standardlize(s string) string {
@@ -126,28 +127,18 @@ func Tokenize(s string) []string {
 	}
 	return tokens
 }
-func CalcCosineSimilarity(vec1 map[string]float64, vec2 map[string]float64) float64 {
-	all_keys := map[string]int{}
-	for key := range vec1 {
-		all_keys[key] = all_keys[key] + 1
+func CalcCosineSimilarity(vec1, vec2 map[string]float64) float64 {
+	var dot_product, norm1, norm2 float64
+	for w, v1 := range vec1 {
+		v2 := vec2[w]
+		dot_product += v1 * v2
+		norm1 += v1 * v1
 	}
-	for key := range vec2 {
-		all_keys[key] = all_keys[key] + 1
+	for _, v2 := range vec2 {
+		norm2 += v2 * v2
 	}
-
-	dot_product := 0.0
-	mag1 := 0.0
-	mag2 := 0.0
-	for key := range all_keys {
-		dot_product += vec1[key] * vec2[key]
-		mag1 += vec1[key] * vec1[key]
-		mag2 += vec2[key] * vec2[key]
-	}
-
-	mag1 = math.Sqrt(mag1)
-	mag2 = math.Sqrt(mag2)
-	if mag1 == 0 || mag2 == 0 {
+	if norm1 == 0 || norm2 == 0 {
 		return 0.0
 	}
-	return dot_product / (mag1 * mag2)
+	return dot_product / (math.Sqrt(norm1) * math.Sqrt(norm2))
 }

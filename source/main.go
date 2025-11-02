@@ -10,7 +10,7 @@ import (
 const PATH_POKEDEX string = "../data/pokemon.json"
 
 type pokemon struct {
-	Id          int               `json: "id"`
+	Id          int               `json:"id"`
 	Name        map[string]string `json:"name"`
 	Types       []string          `json:"type"`
 	Description string            `json:"description"`
@@ -56,8 +56,12 @@ func main() {
 	search_results := search_service.Search(input_str, true)
 
 	// Return result which is a list of description that match with input text
-	log.Println("--- BEST MATCHES: ")
-	for i, result := range search_results {
-		log.Printf("[%3d] %v", i, result)
+	if len(search_results) > 0 {
+		log.Println("--- BEST MATCHES: ")
+		for i, result := range search_results {
+			log.Printf("[%3d] %v", i, result)
+		}
+	} else {
+		log.Print("FOUND NOTHING!")
 	}
 }
